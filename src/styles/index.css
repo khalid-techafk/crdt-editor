@@ -1,0 +1,658 @@
+/**
+ * index.css
+ *
+ * Design tokens and component styles for the CRDT collaborative editor.
+ *
+ * Design philosophy:
+ *   - Dark theme, muted palette with a single blue accent (#4d7cfe)
+ *   - Sharp geometry: border-radius 2–3px only. No pill shapes.
+ *   - Dense layout: think VS Code / Linear, not Notion.
+ *   - Typography-forward: JetBrains Mono for editor, Inter for UI chrome.
+ *   - Minimal animation: 150ms opacity-only transitions where state changes
+ *     need to read clearly (status bar). Nothing decorative.
+ */
+
+/* ============================================================
+   FONTS
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e8e8e8;
+  background-color: #0d0d0d;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   CSS CUSTOM PROPERTIES (Design Tokens)
+   ============================================================ */
+:root {
+  --color-bg:         #0d0d0d;
+  --color-surface:    #111111;
+  --color-surface-2:  #181818;
+  --color-surface-3:  #1e1e1e;
+  --color-border:     #2a2a2a;
+  --color-border-2:   #333333;
+  --color-text:       #e8e8e8;
+  --color-text-muted: #6b6b6b;
+  --color-text-dim:   #404040;
+  --color-accent:     #4d7cfe;
+  --color-accent-dim: rgba(77, 124, 254, 0.15);
+  --color-success:    #4caf50;
+  --color-warning:    #e5c07b;
+  --color-error:      #e06c75;
+
+  --font-ui:    'Inter', sans-serif;
+  --font-mono:  'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  --toolbar-height: 40px;
+  --statusbar-height: 28px;
+
+  --transition-fast: 150ms ease;
+}
+
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--color-bg);
+}
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+.toolbar {
+  height: var(--toolbar-height);
+  min-height: var(--toolbar-height);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.toolbar-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  user-select: none;
+}
+
+.toolbar-brand-mark {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-accent);
+  letter-spacing: -0.02em;
+}
+
+.toolbar-brand-name {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background-color: var(--color-border-2);
+  flex-shrink: 0;
+}
+
+/* Room badge — shows which room you're currently in */
+.toolbar-room-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  flex-shrink: 0;
+  max-width: 200px;
+}
+
+.toolbar-room-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.toolbar-room-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid var(--color-border-2);
+  border-radius: 3px;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.toolbar-btn:hover {
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.toolbar-btn:active {
+  background-color: var(--color-surface-2);
+}
+
+/* Ghost variant — minimal, for secondary actions */
+.toolbar-btn--ghost {
+  border-color: transparent;
+  color: var(--color-text-dim);
+}
+
+.toolbar-btn--ghost:hover {
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  background-color: var(--color-surface-2);
+}
+
+/* Accent variant — primary action (invite) */
+.toolbar-btn--accent {
+  background-color: var(--color-accent-dim);
+  border-color: rgba(77, 124, 254, 0.4);
+  color: var(--color-accent);
+}
+
+.toolbar-btn--accent:hover {
+  background-color: rgba(77, 124, 254, 0.22);
+  border-color: rgba(77, 124, 254, 0.6);
+  color: #6b93ff;
+}
+
+/* Success variant — after copy confirmation or successful import */
+.toolbar-btn--success {
+  background-color: rgba(76, 175, 80, 0.12);
+  border-color: rgba(76, 175, 80, 0.35);
+  color: var(--color-success);
+  cursor: default;
+}
+
+/* Error variant — bad file type or size */
+.toolbar-btn--error {
+  background-color: rgba(224, 108, 117, 0.1);
+  border-color: rgba(224, 108, 117, 0.35);
+  color: var(--color-error);
+}
+
+.toolbar-btn--error:hover {
+  background-color: rgba(224, 108, 117, 0.18);
+  border-color: rgba(224, 108, 117, 0.5);
+}
+
+/* Inline label modifiers — used inside the import button */
+.toolbar-btn-label--success {
+  color: var(--color-success);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbar-btn-label--error {
+  color: var(--color-error);
+}
+
+/* ============================================================
+   EDITOR MAIN AREA
+   ============================================================ */
+.editor-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* editor-wrapper wraps the CodeMirror container and handles drag-and-drop.
+   It fills the main area and acts as the drop target. */
+.editor-wrapper {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Drop zone indicator — shown when a .txt/.md file is dragged over.
+   Border-only highlight, no animation, no dimming. */
+.editor-wrapper--drag-over {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+/* Static overlay label shown during drag — absolute, non-interactive */
+.drop-zone-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 24px;
+  pointer-events: none;
+}
+
+.drop-zone-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-accent);
+  border-radius: 2px;
+  color: var(--color-accent);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.editor-container {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* CodeMirror editor takes full height */
+.editor-container .cm-editor {
+  height: 100%;
+}
+
+.editor-container .cm-scroller {
+  overflow: auto;
+  height: 100%;
+}
+
+/* ============================================================
+   PRESENCE BAR
+   ============================================================ */
+.presence-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.presence-label {
+  font-size: 11px;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.presence-list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.presence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  max-width: 120px;
+}
+
+.presence-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.presence-name {
+  font-size: 11px;
+  color: var(--color-text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   STATUS BAR
+   ============================================================ */
+.status-bar {
+  height: var(--statusbar-height);
+  min-height: var(--statusbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  flex-shrink: 0;
+  z-index: 100;
+  transition: opacity var(--transition-fast);
+}
+
+.status-left,
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transition: background-color var(--transition-fast);
+}
+
+.status-text {
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.status--connected .status-text { color: var(--color-success); }
+.status--connecting .status-text { color: var(--color-warning); }
+.status--disconnected .status-text { color: var(--color-text-dim); }
+
+.status-peers {
+  font-size: 11px;
+  color: var(--color-text-dim);
+}
+
+.status-room {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.status-room-label {
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-room-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  padding: 0 5px;
+  line-height: 18px;
+}
+
+.status-hint {
+  font-size: 11px;
+  color: var(--color-text-dim);
+}
+
+/* ============================================================
+   USER SETUP MODAL
+   ============================================================ */
+.setup-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.setup-modal {
+  width: 400px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-2);
+  border-radius: 3px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.setup-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setup-title {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+/* Remove the h1 browser default margin since we're in a modal */
+.setup-title {
+  margin: 0;
+}
+
+.setup-subtitle {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setup-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.setup-input {
+  height: 34px;
+  padding: 0 10px;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border-2);
+  border-radius: 2px;
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.setup-input::placeholder {
+  color: var(--color-text-dim);
+}
+
+.setup-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-dim);
+}
+
+.setup-input--error {
+  border-color: var(--color-error);
+}
+
+.setup-error {
+  font-size: 12px;
+  color: var(--color-error);
+}
+
+.setup-submit {
+  margin-top: 4px;
+  height: 34px;
+  background-color: var(--color-accent);
+  border: none;
+  border-radius: 2px;
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  letter-spacing: 0.01em;
+}
+
+.setup-submit:hover {
+  background-color: #5d8cff;
+}
+
+.setup-submit:active {
+  background-color: #3d6ce8;
+}
+
+.setup-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.setup-meta p {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.setup-meta strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* ============================================================
+   SCROLLBAR STYLING (Webkit)
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-2);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+::selection {
+  background-color: rgba(77, 124, 254, 0.3);
+  color: inherit;
+}
+
+/* ============================================================
+   FOCUS VISIBLE
+   ============================================================ */
+:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+button:focus-visible {
+  outline: 1px solid var(--color-accent);
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+code {
+  font-family: var(--font-mono);
+}
