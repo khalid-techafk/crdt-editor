@@ -61,8 +61,9 @@ export const yText = ydoc.getText('content');
 // The server at localhost:1234 is a thin message router; it does NOT
 // interpret document content or resolve conflicts.
 // ---------------------------------------------------------------------------
+const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:1234';
 export const provider = new WebsocketProvider(
-  'ws://localhost:1234',
+  wsUrl,
   ROOM,
   ydoc,
   { connect: true }
